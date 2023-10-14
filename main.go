@@ -17,6 +17,7 @@ var domainType string
 var name string
 var ttl int
 var url string
+var newIp string
 
 type GodaddyRecord struct {
 	Data string `json:"data"`
@@ -38,6 +39,7 @@ func main() {
 	flag.StringVar(&name, "n", "@", "domain name")
 	flag.IntVar(&ttl, "T", 600, "domain name")
 	flag.StringVar(&url, "u", "http://api.ipify.org", "default check url")
+	flag.StringVar(&newIp, "N", "", "new ip")
 
 	flag.Parse()
 
@@ -45,21 +47,26 @@ func main() {
 		flag.PrintDefaults()
 		return
 	}
-	log.Println(key, secret, domain, domainType, name, ttl, url)
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+	var ip string
+	if newIp == "" {
+		log.Println(key, secret, domain, domainType, name, ttl, url)
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 
-	ipBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
+		ipBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ip = string(ipBytes)
+	} else {
+		ip = newIp
 	}
 
-	ip := string(ipBytes)
 	log.Printf("current ip = %s", ip)
 
 	godaddyUrl := fmt.Sprintf("https://api.godaddy.com/v1/domains/%s/records/%s/%s", domain, domainType, name)
